@@ -201,6 +201,8 @@ User reviews and sends from Telegram app.
 4. **Privacy**: The AI sees all accessible chats. Be mindful of sensitive conversations.
 
 5. **Session Security**: The session string provides full account access. Treat it like a password.
+   - On macOS: Store in Keychain (see setup.md) rather than .env files
+   - Never commit credentials to git
 
 ---
 

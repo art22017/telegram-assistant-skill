@@ -71,6 +71,7 @@ This skill follows a **draft-first** policy:
 This skill works best with the following PRs merged into telegram-mcp:
 - [PR #45](https://github.com/chigwell/telegram-mcp/pull/45): Draft management tools (save_draft, get_drafts, clear_draft)
 - [PR #46](https://github.com/chigwell/telegram-mcp/pull/46): Fix unread detection (unread_mark flag)
+- [PR #47](https://github.com/chigwell/telegram-mcp/pull/47): macOS Keychain support for secure credential storage
 
 Until merged, you can use the fork with these features.
 
