@@ -1,18 +1,45 @@
-# Generated style guides (user-specific, but keep template)
-references/style-guide.md
-references/style-guide-*.md
-!references/style-guide-template.md
+# Session files
+*.session
+*.session-journal
 
-# Draft posts
-references/draft-*.md
+# Environment files
+.env
+.env.local
 
-# OS files
-.DS_Store
-Thumbs.db
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Editor files
-*.swp
-*.swo
-*~
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+
+# IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# Logs
+mcp_errors.log
+*.log

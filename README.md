@@ -1,107 +1,83 @@
-# Telegram Assistant Skill
+# Telegram Assistant Skill (Extended)
 
-A Claude Code skill for automating Telegram workflows: digests, channel posting, and style-matched drafts.
+This repository is a technical fork of BayramAnnakov/telegram-assistant-skill, providing advanced automation capabilities for Telegram via MTProto and MCP.
 
-## Features
+## Technical Enhancements
+- Global search functionality across all dialogs.
+- Date-based message extraction from Saved Messages (ignores read status).
+- Persistent MTProto session management via Telethon.
+- Structured JSON output for downstream agent processing.
 
-- **Digest Workflow**: Summarize unread messages across all chats with priority classification
-- **Style Extraction**: Analyze channel posts to capture writing style patterns
-- **Post Workflow**: Draft posts matching your authentic voice, saved as drafts for review
+## Prerequisites
+- Python 3.10+
+- Telegram API Credentials (API_ID, API_HASH)
+- Telethon library
+- Configured [telegram-mcp](https://github.com/chigwell/telegram-mcp) server (for workflow integration)
 
-## Requirements
+## Configuration
 
-- [Claude Code](https://claude.ai/claude-code) or compatible agent
-- [telegram-mcp](https://github.com/chigwell/telegram-mcp) server configured
-- Telegram API credentials from https://my.telegram.org
+1. **API Credentials**
+   Register your application at [my.telegram.org/apps](https://my.telegram.org/apps) to obtain `API_ID` and `API_HASH`.
 
-## Installation
+2. **Environment Setup**
+   Copy `env.example` to `.env` and populate the required variables:
+   ```env
+   TELEGRAM_API_ID=1234567
+   TELEGRAM_API_HASH=abcdef0123456789abcdef0123456789
+   ```
 
-1. Clone this repo:
+3. **Dependencies**
+   Install required packages:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## Initial Authentication
+The client requires a one-time interactive login to generate an encrypted session file.
+
 ```bash
-git clone https://github.com/BayramAnnakov/telegram-assistant-skill.git
+python telegram_client.py --auth
 ```
+- Provide your phone number in international format.
+- Enter the verification code received via Telegram.
+- If enabled, provide your 2FA password.
+- A persistent `anon.session` file will be generated in the root directory.
 
-2. Symlink to Claude skills directory:
+## Core Operations
+
+### Identity Verification
+Verify current session status and account metadata:
 ```bash
-ln -s /path/to/telegram-assistant-skill ~/.claude/skills/telegram-assistant
+python telegram_client.py --whoami
 ```
 
-3. Restart Claude Code
-
-4. Verify the skill is detected:
-```
-Ask Claude: "use the telegram-assistant skill to show my unread messages"
-```
-
-## Usage
-
-### Digest Workflow
-Triggers: "telegram digest", "unread messages", "morning summary"
-
-```
-"Show me a digest of my unread Telegram messages"
-"Summarize what I missed in Telegram today"
+### Global Search
+Execute a broad search across all accessible dialogs:
+```bash
+python telegram_client.py --search "query_string"
 ```
 
-### Style Extraction
-Triggers: "analyze writing style", "extract style from channel"
-
-```
-"Analyze the writing style of my ProductsAndStartups channel"
-"Extract style patterns from @cryptoEssay"
+Limit search to a specific chat:
+```bash
+python telegram_client.py --search "query_string" --chat-id -100123456789
 ```
 
-### Post Workflow
-Triggers: "post to channel", "draft telegram post", "write for channel"
-
-```
-"Draft a post about MCP for my channel using my style"
-"Write a channel post about AI agents"
+### Saved Messages Scraper
+Extract historical data from Saved Messages for a specific date (ISO 8601 format):
+```bash
+python telegram_client.py --scrape-saved 2024-01-15
 ```
 
-## Safety
+## MCP Workflows
+Standardized triggers for AgentSkills.io compliant agents:
+- `telegram digest`: Generates summaries of unread communications.
+- `analyze writing style`: Extracts linguistic patterns for style matching.
+- `post to channel`: Drafts content to channels using extracted styles.
 
-This skill follows a **draft-first** policy:
-- Never sends messages directly via `send_message`
-- Always uses `save_draft` so you can review in Telegram before sending
-- Drafts appear in the chat input field in your Telegram app
-
-## Dependencies
-
-This skill works best with the following PRs merged into telegram-mcp:
-- [PR #45](https://github.com/chigwell/telegram-mcp/pull/45): Draft management tools (save_draft, get_drafts, clear_draft)
-- [PR #46](https://github.com/chigwell/telegram-mcp/pull/46): Fix unread detection (unread_mark flag)
-- [PR #47](https://github.com/chigwell/telegram-mcp/pull/47): macOS Keychain support for secure credential storage
-
-Until merged, you can use the fork with these features.
-
-## File Structure
-
-```
-telegram-assistant/
-├── SKILL.md              # Main skill file (AgentSkills.io compliant)
-├── README.md             # This file
-├── LICENSE               # MIT License
-└── references/
-    ├── setup.md          # Installation guide for telegram-mcp
-    └── style-guide.md    # Generated style guide (per-channel)
-```
-
-## AgentSkills.io Compliance
-
-This skill follows the [AgentSkills.io](https://agentskills.io) open standard:
-- Valid YAML frontmatter with required fields
-- Trigger-based activation (not slash commands)
-- Clear workflow documentation
+## Security and Persistence
+- **Session Persistence**: Subsequent execution reuses the `anon.session` file, bypassing interactive auth.
+- **Draft Policy**: All automated messaging defaults to `save_draft` to enforce manual review.
+- **Data Privacy**: No telemetry or external logging is implemented. MTProto communication is direct between the client and Telegram servers.
 
 ## License
-
 MIT
-
-## Author
-
-Bayram Annakov ([@BayramAnnakov](https://t.me/BayramAnnakov))
-
----
-
-Co-created with Claude using the telegram-assistant skill itself.

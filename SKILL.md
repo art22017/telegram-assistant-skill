@@ -1,229 +1,137 @@
 ---
 name: telegram-assistant
 description: |
-  Telegram automation assistant using telegram-mcp. Use when users want to:
+  Advanced Telegram automation assistant using telegram-mcp and local Telethon client. Use when users want to:
   (1) Get a digest of unread Telegram messages
   (2) Analyze their writing style from channel posts
   (3) Draft and publish posts to Telegram channels
   (4) Search and reply to messages across chats
-  Triggers: "telegram digest", "unread messages", "morning summary",
+  (5) Deep search across all chats with keywords
+  (6) Scrape "Saved Messages" by specific date
+  Triggers: "telegram digest", "unread messages", "summary",
   "post to channel", "draft telegram post", "analyze writing style",
-  "extract style from channel", "telegram workflow"
+  "extract style from channel", "search telegram", "find in telegram",
+  "scrape saved messages", "telegram search", "telegram workflow"
 license: MIT
 compatibility: |
-  Requires telegram-mcp server configured in Claude Code.
-  See references/setup.md for installation instructions.
+  Requires:
+  - telegram-mcp server configured in the MCP client (for digest and posting workflows).
+  - telegram_client.py (for advanced search and scraping, uses Telethon directly).
 metadata:
-  author: Bayram Annakov (onsa.ai)
-  version: "1.0.0"
+  author: Bayram Annakov (onsa.ai), Extended by Community
+  version: "2.0.0"
   category: productivity
   telegram-mcp-repo: https://github.com/chigwell/telegram-mcp
-allowed-tools: mcp__telegram-mcp__* Read Write Edit Glob
+  telethon-repo: https://github.com/LonamiWebs/Telethon
+allowed-tools: mcp__telegram-mcp__* Read Write Edit Glob Bash
 ---
 
 # Telegram Assistant
 
-Automate Telegram workflows with AI: digests, channel posting, and style-matched drafts.
+Automate Telegram workflows: digests, channel posting, style-matched drafts, and advanced search/scraping.
 
-## Quick Start
+## Quick Start Reference
 
-```
-Need morning digest?     → Use Digest Workflow
-Want to post to channel? → Use Style + Post Workflow
-Replying to messages?    → Use Reply Workflow
+- Morning digest: Use Digest Workflow (via telegram-mcp).
+- Channel posting: Use Style + Post Workflow.
+- Search all chats: Use Search Workflow (via telegram_client.py).
+- Scrape Saved Messages by date: Use Scrape Workflow.
+- Replying to messages: Use Reply Workflow.
+
+---
+
+## Authentication
+
+Authentication is required for search and scrape features.
+
+```bash
+cd telegram
+pip install -r requirements.txt
+export TELEGRAM_API_ID=your_api_id
+export TELEGRAM_API_HASH=your_api_hash
+python telegram_client.py --auth
 ```
 
 ---
 
-## Workflow 1: Digest
+## Workflow 0: Search
 
-**Goal**: Summarize unread messages across all chats.
+Goal: Search across all chats or a specific chat for messages containing keywords.
 
-### Step 1: Get Unread Chats
+### CLI Usage
+
+```bash
+# Global search
+python telegram_client.py --search "keyword"
+
+# Specific chat search
+python telegram_client.py --search "keyword" --chat-id 123456789
 ```
-Use list_chats to find chats with unread messages.
-Look for "Unread:" in the output (both count and "marked" flag).
-```
 
-### Step 2: Read Recent Messages
-For each chat with unread:
-1. Use `get_messages` or `list_messages` to fetch recent messages
-2. Focus on messages since last read
-
-### Step 3: Summarize
-Create a digest with:
-- **Priority items**: Direct mentions, questions needing response
-- **Updates**: News, announcements from channels
-- **Low priority**: General chatter, FYI items
-
-### Step 4: Draft Replies (Optional)
-For messages needing response:
-1. Draft a reply
-2. Use `save_draft` to save it for user review
-3. User can review and send manually in Telegram app
-
-**Safety**: Never send messages directly. Always save as draft first.
+### Integration
+When a user requests a search, call `python telegram_client.py --search "query"`, parse the JSON output, and present the results.
 
 ---
 
-## Workflow 2: Style Extraction
+## Workflow 1: Scrape Saved Messages
 
-**Goal**: Analyze channel posts to capture user's writing style.
+Goal: Extract all messages from "Saved Messages" for a specific date (YYYY-MM-DD).
 
-### Step 1: Fetch Posts
+### CLI Usage
+
+```bash
+python telegram_client.py --scrape-saved 2024-01-15
 ```
-Use list_messages with the channel name/ID.
-Fetch last 15-20 posts (skip media-only posts).
-```
-
-### Step 2: Analyze Patterns
-Extract these characteristics:
-- **Language mix**: Ratio of Russian to English terms
-- **Structure**: Use of hooks, tldr, bullets, numbered lists, sections
-- **Tone**: Formal (вы) vs casual (ты), first-person usage (я/мы)
-- **Length**: Average post length in words
-- **Emoji**: Frequency and types used
-- **Call-to-action**: How posts typically end
-
-### Step 3: Generate Style Guide
-Create `references/style-guide.md` with:
-```markdown
-# [Channel Name] Style Guide
-
-## Language
-- Primary: Russian with English tech terms
-- Formality: [formal/casual]
-- Person: [я/мы usage]
-
-## Structure
-- Hook: [question/statement/story]
-- Sections: [yes/no, with headers?]
-- Lists: [bullets/numbered]
-- tldr: [yes/no]
-
-## Formatting
-- Average length: ~[X] words
-- Emoji: [frequent/occasional/rare]
-- Common emojis: [list]
-
-## Endings
-- Call-to-action style: [question/invitation/resource link]
-
-## Example Patterns
-[Include 2-3 anonymized structure examples]
-```
-
-### Step 4: Save for Future Use
-The style guide is now available for the Post workflow.
 
 ---
 
-## Workflow 3: Post to Channel
+## Workflow 2: Digest
 
-**Goal**: Draft a post matching user's writing style.
+Goal: Summarize unread messages across all chats.
 
-### Pre-requisite
-Run Style Extraction workflow first if `references/style-guide.md` doesn't exist.
-
-### Step 1: Read Style Guide
-```
-Read references/style-guide.md to understand the target style.
-```
-
-### Step 2: Understand Topic
-Ask user for:
-- Topic/subject matter
-- Key points to cover
-- Target audience (if different from usual)
-- Any specific call-to-action
-
-### Step 3: Draft Post
-Write the post following the style guide:
-- Match language mix ratio
-- Use the same structural patterns
-- Maintain consistent tone
-- Include appropriate emoji (if style uses them)
-- End with typical call-to-action pattern
-
-### Step 4: User Review
-Present the draft to user for feedback. Iterate if needed.
-
-### Step 5: Save as Draft
-```
-Use save_draft(chat_id="ChannelName", message="draft content")
-```
-
-User can then:
-1. Open Telegram app
-2. Go to the channel
-3. See the draft in the input field
-4. Review and send when ready
-
-**Safety**: Always use `save_draft`, never `send_message` for channel posts.
+### Steps
+1. Use `list_chats` to identify chats with unread messages.
+2. Use `get_messages` or `list_messages` for each identified chat.
+3. Generate a summary categorized by priority (Mentions, Updates, General).
+4. (Optional) Draft replies using `save_draft`.
 
 ---
 
-## Workflow 4: Search & Reply
+## Workflow 3: Style Extraction
 
-**Goal**: Find specific messages and draft contextual replies.
+Goal: Analyze channel posts to capture the user's writing style.
 
-### Step 1: Search
-```
-Use search_messages(chat_id, query) to find relevant messages.
-Or list recent messages and filter manually.
-```
-
-### Step 2: Get Context
-```
-Use get_message_context(chat_id, message_id) to see surrounding messages.
-```
-
-### Step 3: Draft Reply
-Write a contextual reply based on the conversation flow.
-
-### Step 4: Save as Draft Reply
-```
-Use save_draft(chat_id, message, reply_to_msg_id=message_id)
-```
-
-User reviews and sends from Telegram app.
+### Steps
+1. Fetch the last 15-20 posts from a channel using `list_messages`.
+2. Analyze language, structure, tone, length, and call-to-action patterns.
+3. Save the findings to `references/style-guide.md`.
 
 ---
 
-## Safety Guidelines
+## Workflow 4: Post to Channel
 
-1. **Draft First**: Never use `send_message` for important communications. Always `save_draft`.
+Goal: Draft a post that matches the user's writing style.
 
-2. **Verify Chat ID**: Double-check you're targeting the right chat before any action.
-
-3. **Rate Limits**: Avoid rapid-fire API calls. Space out requests if processing many chats.
-
-4. **Privacy**: The AI sees all accessible chats. Be mindful of sensitive conversations.
-
-5. **Session Security**: The session string provides full account access. Treat it like a password.
-   - On macOS: Store in Keychain (see setup.md) rather than .env files
-   - Never commit credentials to git
+### Steps
+1. Read `references/style-guide.md`.
+2. Generate a draft based on the user's topic.
+3. Use `save_draft` to save the draft to the target channel for review.
 
 ---
 
-## Troubleshooting
+## Workflow 5: Search and Reply
 
-### "Could not find the input entity"
-- Use channel username (without @) or numeric ID
-- For supergroups, try prepending -100 to the ID
+Goal: Locate specific messages and draft contextual replies.
 
-### "Chat not found"
-- Ensure the account has access to the chat
-- Try using the exact chat title from `list_chats`
-
-### Draft not appearing
-- Open the specific chat in Telegram app
-- Drafts are saved per-chat
+### Steps
+1. Use `search_messages` or `list_messages`.
+2. Retrieve context using `get_message_context`.
+3. Use `save_draft` with `reply_to_msg_id`.
 
 ---
 
-## Resources
+## Safety and Security
 
-- **telegram-mcp repo**: https://github.com/chigwell/telegram-mcp
-- **Setup guide**: [references/setup.md](references/setup.md)
-- **Style guide template**: [references/style-guide.md](references/style-guide.md)
+1. **Draft-First Policy**: Use `save_draft` instead of `send_message` for important communications.
+2. **Session Security**: The `anon.session` file provides account access. Keep it secure and do not commit it to version control.
+3. **API Rate Limits**: Avoid excessive API calls to prevent temporary bans.
